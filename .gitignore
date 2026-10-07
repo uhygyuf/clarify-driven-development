@@ -1,0 +1,8 @@
+﻿# CDD working artifacts — never commit a personal state file
+CDD-STATE.local.md
+CDD-HISTORY.md
+backups/
+*.bak
+*.v1.*.bak
+.DS_Store
+Thumbs.db
