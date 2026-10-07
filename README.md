@@ -35,6 +35,7 @@ If that is not you, this model will feel like overhead. It is designed around th
 - [The problem](#the-problem)
 - [The model in one screen](#the-model-in-one-screen)
 - [Quick start](#quick-start)
+- [**Full walkthrough with examples → `docs/quickstart.md`**](docs/quickstart.md)
 - [What makes it different](#what-makes-it-different)
 - [Field evidence](#field-evidence)
 - [What did not survive contact with real use](#what-did-not-survive-contact-with-real-use)
@@ -93,6 +94,8 @@ Above are the spec and last session's progress. Continue, and first tell me wher
 **Before ending every session**, save the updated `CDD-STATE.md`. It is the only memory you have.
 
 The agent opens by deciding one thing — whether the project involves money, shared inventory or concurrency — and either runs the full process or a three-step lightweight mode. Most projects should get the lightweight mode.
+
+> **New here? Read [`docs/quickstart.md`](docs/quickstart.md).** It walks through both session types paste-by-paste, with a real worked example of what the agent sends back, the three kinds of question it asks, what to do when something goes wrong, and a printable session checklist.
 
 ## What makes it different
 
