@@ -165,7 +165,7 @@ docs/          (reserved)
 - **The state file is trusted, not verified.** Nothing detects a row the user edited out or forgot to paste. A weak hash covers the artifacts, not the state file itself.
 - **This is designed for a single developer.** The state file is carried by hand; it does not scale to a team, and it does not try to.
 - **It is not validated by controlled study.** One real project, two days, one domain. Treat the field evidence as existence proof — that it *can* work — rather than as a general result.
-- **The document is long.** 1,207 lines. Most of it is templates and a question bank that the agent consults selectively; the behavioural core is Parts 1 and 5.
+- **The document is long.** 1,209 lines. Most of it is templates and a question bank that the agent consults selectively; the behavioural core is Parts 1 and 5.
 
 ## Design lineage
 
@@ -255,6 +255,23 @@ v1.6 之前有**五轮评审**——静态读、模拟会话、agent 自评、�
 | **§10 闸门不动** | 加字段会让审查变成阻塞项，这条明确不做；输出行就是执行机制 |
 
 **没改**：§6.1 的强制触发条件（钱 / 库存 / 并发占用 / 鉴权 / 隐私）——它本来就覆盖了高代价场景。**唯一一处上游与 CDD 处境冲突的地方**是 TDD 的删除规则，作用域写在 `upstream/README.md` 和 §5.3 两处，因为只读附录的后来的会话会得出相反结论。
+
+### v1.8：和全局复用规则对齐
+
+这台机器的全局规则要求**先搜 GitHub 高星、再决定写不写**，默认姿态是一个项目约 90% 复用 + 10% 适配。但 CDD 的 Article 5 单独读起来方向相反：5.1 要求每个依赖都有书面理由、5.2 限制抽象层——一个会话很容易读成「不是自己写的一律别加」。
+
+| 改动 | 说明 |
+|---|---|
+| **新增 Article 5.6** | 复用已验证的高星实现是**默认动作**，不是需要辩护的例外；5.1 要的书面理由由证据满足：`<repo> (<star>, <license>, <版本/commit>)` + 为什么胜过其它候选 |
+| **写成两个对称的错误** | 「我们自己也能写」不构成拒绝依赖的理由；「它帮我们少写了代码」也不构成接受的理由 |
+| **四条筛查内联** | 许可 / 活跃度 / 维护 / 依赖重量——写进条款本身，脱离全局文件也自洽 |
+| **E8 加交叉引用** | E8 卡的是**确认**，不是「不要复用」 |
+| **`CONSTITUTION.md` 同步更新** | Article 5 存在于**两处**，此前没有任何东西防止它们分叉 |
+| **`sync.ps1` 加条款集合校验** | 比对 `CDD-BOOT.md` Part 2 与 `CONSTITUTION.md` 的条款编号，不一致就退出 1 |
+
+**没改**：5.1–5.5 本身。复用默认值取消的是「对依赖的预设怀疑」，不是 S4 的确认闸门。
+
+顺带修掉一个 guard 自身的 bug：`-DryRun` 原本无条件 `exit 0`，等于把漂移伪装成成功——是故意注入一次漂移才发现的。
 
 ### 已知局限
 

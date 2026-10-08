@@ -115,6 +115,31 @@ if (Test-Path $skillMd) {
 $problems = 0
 $copied   = 0
 
+# ---- guard: Part 2 of the spec and CONSTITUTION.md must carry the same clauses --
+# Article 5 exists in two places. Until v1.8 nothing compared them, so a clause
+# added to one and forgotten in the other would ship silently.
+$constPath = Join-Path $Repo 'skill\references\CONSTITUTION.md'
+$part2 = [regex]::Match((Get-Content $specPath -Raw), '(?ms)^# Part 2:.*?(?=^# Part 3:)')
+if (-not $part2.Success) {
+    Write-Warning 'could not isolate Part 2 of CDD-BOOT.md - skipping the constitution cross-check.'
+} elseif (-not (Test-Path $constPath)) {
+    Write-Warning "skill/references/CONSTITUTION.md not found at $constPath - skipping the constitution cross-check."
+} else {
+    $clauseRx  = [regex]'(?m)^-\s+(?:\*\*)?(\d+\.\d+)'
+    $inSpec    = @($clauseRx.Matches($part2.Value)                        | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    $inConst   = @($clauseRx.Matches((Get-Content $constPath -Raw))       | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    $onlySpec  = @($inSpec  | Where-Object { $_ -notin $inConst })
+    $onlyConst = @($inConst | Where-Object { $_ -notin $inSpec })
+    if ($onlySpec.Count -gt 0 -or $onlyConst.Count -gt 0) {
+        Write-Warning 'constitution drift - the same articles are written in two places and they disagree:'
+        if ($onlySpec.Count  -gt 0) { Write-Warning "   in CDD-BOOT.md Part 2 only: $($onlySpec  -join ', ')" }
+        if ($onlyConst.Count -gt 0) { Write-Warning "   in CONSTITUTION.md only:    $($onlyConst -join ', ')" }
+        $problems++
+    } else {
+        Write-Host "constitution cross-check: $($inSpec.Count) clauses present in both files.`n"
+    }
+}
+
 foreach ($t in $Targets) {
     Write-Host "== $($t.Name)  ->  $($t.Root)"
     if (-not (Test-Path $t.Root)) {
@@ -170,7 +195,11 @@ foreach ($t in $Targets) {
 }
 
 if ($DryRun) {
-    Write-Host 'dry run - nothing was written.'
+    if ($problems -gt 0) {
+        Write-Host "dry run: $problems problem(s) found - nothing was written." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host 'dry run - nothing to write.'
     exit 0
 }
 

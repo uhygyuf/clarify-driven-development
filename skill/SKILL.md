@@ -3,8 +3,8 @@ name: clarify-driven-development
 description: Run software-engineering work under the CDD (Clarify-Driven Development) model from CDD-BOOT.md — clarify before building, emit a Understanding Acknowledgment (UA) gate before any artifact, write decidable acceptance criteria, freeze contracts, verify in a separate context, and persist decisions to CDD-STATE.md so they survive session death. Use ONLY when the user explicitly invokes CDD for a software project — "用 CDD", "按 CDD 开发", "走走流程", "CDD 流程", "用澄清驱动开发", or names CDD-BOOT.md / CDD-STATE.md. Do NOT auto-start for ordinary coding, editing, debugging, scripting, or non-software tasks.
 whenToUse: Explicit invocation only. Applies when the user asks for CDD by name (or by the state-file pair) on a software project — a new project, a new feature, or a requirements change on work already under CDD. Not for ordinary coding, debugging, quick scripts, config edits, or non-software tasks; those proceed without this process.
 metadata:
-  version: "1.7"
-  source: clarify-driven-development repository (CDD-BOOT.md v1.7)
+  version: "1.8"
+  source: clarify-driven-development repository (CDD-BOOT.md v1.8)
   spec_copy: references/CDD-BOOT.md
 ---
 
@@ -188,7 +188,11 @@ at 6 concrete choices. Put the rest under "not addressed yet".
 - **E4** never modify or delete a passing test; changing one requires an explicit request.
 - **E5** freeze contracts first; frontend and backend types are derived, never written twice.
 - **E6** the pure-logic layer must not import IO. **E7** occupancy checks complete inside one
-  transaction. **E8** new dependencies need name + reason + alternatives, confirmed first.
+  transaction. **E8** new dependencies need name + reason + alternatives, confirmed first — that
+  gates on *confirmation*, not on a bias against reuse. **Article 5.6: reusing a verified
+  high-star implementation is the default**, and the written reason 5.1 asks for is the evidence
+  (`<repo> (<stars>, <license>, <version/commit>)`). Do not screen with "we could have written it
+  ourselves"; do screen on license, activity, maintenance and dependency weight.
 - **E9** do not modify `.env*`, CI config, migration files, or production config without
   confirmation. **E10** report format: files changed / commands run / raw output / failures /
   open questions.
@@ -299,7 +303,7 @@ the session, when a stage transition completes, or when asked; between those mom
 | `scripts/cdd-init.ps1 -Project <dir>` | scaffolding a project: constitution, empty state file, specs dir |
 
 This bundle is a **mirror** of the upstream CDD repository
-(`github.com/uhygyuf/clarify-driven-development`, v1.7). If the user says the CDD spec has a
+(`github.com/uhygyuf/clarify-driven-development`, v1.8). If the user says the CDD spec has a
 newer version, re-sync rather than editing `references/` in place. `references/upstream/` is a
 mirror of a mirror — it is vendored from `obra/superpowers`, not from the CDD repository.
 

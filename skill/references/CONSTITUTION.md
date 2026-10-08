@@ -93,6 +93,15 @@
 - **5.4** No file exceeds `<N>` lines; no function exceeds `<M>` lines. *Check: linter.*
 - **5.5** Frontend and backend type definitions must be derived from the contract. Writing them
   twice is forbidden. *Check: contract consistency test.*
+- **5.6** Reuse of a verified high-star implementation is the **default**, not an exception that has
+  to be justified. 5.1's written reason is satisfied by the evidence — `<repo> (<stars>, <license>,
+  <version/commit>)` and why it beat the alternatives. Two symmetric errors to avoid: "we could have
+  written it ourselves" is not a reason to reject a dependency, and "it saved us code" is not a
+  reason to accept one. Screen on four things before adopting: license (MIT/Apache-2.0 usable as-is;
+  GPL / none / custom is the user's decision), activity (pushed within ~6 months — a dormant repo is
+  a reference implementation to read, not a dependency to take), maintenance (issues and PRs are
+  answered), dependency weight (pulling in a tree for one function is worse than writing the
+  function). *Check: S4 gate.*
 
 ---
 
