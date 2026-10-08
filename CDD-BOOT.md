@@ -37,7 +37,7 @@ You (the LLM) are now a collaborative agent operating under **CDD (Clarify-Drive
 
 **A rule with no observable output does not exist.** Long enumerated constraints evaporate under length and recency pressure; the only rules that survive a long session are the ones that force a line of text to be printed. This was measured, not assumed: a simulated run found that rules phrased as "may" were skipped, while a rule that must print `[FAST PATH CHECK]` was executed.
 
-Therefore five rules in this document are expressed as **required output lines**. You must print them; their absence is a protocol violation.
+Therefore six rules in this document are expressed as **required output lines**. You must print them; their absence is a protocol violation.
 
 | Line | When | Section |
 |---|---|---|
@@ -46,6 +46,7 @@ Therefore five rules in this document are expressed as **required output lines**
 | `[REF RESOLVED] "<user's phrase>" → <exact item or file> \| confirm?` | Before acting on an ambiguous reference | §2.5 |
 | `[INTERJECTION] defect \| new-req \| subjective \| change \| unclear → <action>` | The moment the user speaks mid-implementation | §5.1 |
 | `[STAGE GATE]` one-liner (§10.3) | Before writing any artifact and before any stage transition | §10 |
+| `[FITNESS REVIEW] performed <a\|b\|none> \| Critical: <n> \| Important: <n> \| Minor: <n>` | At S5 exit, reported with the verification result (§6.5) | §6.5 |
 
 If you find yourself following a rule that has no line, that is fine. If you find yourself *skipping* a rule and cannot point to a line, that is the failure mode this section exists to prevent.
 
@@ -567,6 +568,20 @@ When implementation reveals that a locked assumption is wrong (the platform cann
 
 The full §1.1 overturn procedure (expire everything downstream, re-enter the stage) is for **user-initiated** changes of mind. A late-discovered technical constraint is not the same event and should not cost the same amount.
 
+### 5.3 Operational detail: the vendored upstream annex
+
+E2 and E3 state *what* the rule is. They do not state how to satisfy it, and that gap is where the rule quietly fails — an agent that believes it is doing test-first, and is not.
+
+`upstream/` vendors three skills from [obra/superpowers](https://github.com/obra/superpowers) at a pinned commit, verbatim and MIT-licensed, to supply that detail. See `upstream/README.md` for provenance and the re-sync procedure. Load:
+
+| File | When |
+|---|---|
+| `upstream/test-driven-development/SKILL.md` | before implementing anything under S5 — RED-GREEN-REFACTOR, plus the table of rationalizations that replace it |
+| `upstream/test-driven-development/writing-good-tests.md` | before writing or changing any test — naming the break a test catches, deriving expectations by hand, not asserting on mocks, the mutation check |
+| `upstream/verification-before-completion/SKILL.md` | before stating that anything is done, fixed, or passing |
+
+**On pre-existing code this annex is scoped, not adopted literally.** The vendored TDD skill requires deleting code that was written before its test. That is correct for greenfield work and destructive for a brownfield project (§1.3, S0.5). Pin existing behaviour with characterization tests first — those are observed to **pass**, because the behaviour already exists and is presumed correct until an AC says otherwise — and change behaviour only afterwards. `upstream/README.md` records this scoping in full, because a later session reading only the vendored file would draw the opposite conclusion.
+
 ## 6. Independent Verification (S5 exit)
 
 ### 6.1 When it is required
@@ -643,6 +658,25 @@ Output JSON:
 When independent verification does **not** apply, the implementer must instead produce a **self-verification report** containing, for every AC: the exact test assertion that covers it, the command that ran it, and one counterexample that was deliberately constructed and observed to fail before the fix and pass after. Attach it to the delivery note.
 
 **The implementer must never declare success on its own.** Only the verifier's `overall: PASS` (or, in the non-mandatory case, a complete self-verification report) permits moving to S6.
+
+### 6.5 Code fitness review — the second question
+
+§6.1–§6.4 answer one question: **does the code satisfy every acceptance criterion?** That is the question §6.4's prompt is built for, and it is not the only question that decides whether something is shippable. A change can satisfy every AC and still be unfit to release.
+
+So at S5 exit, ask the second question as well: **is this fit to ship?** The mechanism is vendored — see §5.3 — at `upstream/requesting-code-review/`: dispatch a reviewer with the template at `code-reviewer.md`, which covers plan alignment, code quality, architecture, security and production readiness, and reports findings by severity (Critical / Important / Minor).
+
+**This review is not mandatory.** Unlike §6.1's independent verification it has no trigger condition, it is not committed to at S4, and a project may skip it. Two things are mandatory regardless:
+
+1. **Say whether it was done.** At S5 exit, print:
+   `[FITNESS REVIEW] performed <a|b|none> | Critical: <n> | Important: <n> | Minor: <n>`
+   `none` is a valid answer, as is `a` (a fresh session, paste-hygienic per §6.3) or `b` (a dispatched subagent handed only the four allowed items). Silence is not valid.
+2. **If it was done, act on it.** Critical findings block the S5 exit the same way a `violated` AC does. Important findings are fixed, or explicitly recorded as declined with a reason. Minor findings may be recorded for later.
+
+**Why the reporting is mandatory while the review is not**: §0.1's rule is that a rule with no printed line does not survive length pressure. A "consider a review" that prints nothing is skipped silently and leaves no trace — which is precisely how an unrecorded verification path was caught being skipped, and why v1.2 made that path a recorded commitment. One printed line costs nothing; an unrecorded omission costs the ability to tell, three months later, whether anything was reviewed at all.
+
+The §10 gate is **deliberately unchanged** by this clause. Adding a field to §10.1 would make the review block a transition, which this clause does not do; the printed line is the enforcement, and its absence is a protocol violation under §0.1.
+
+**If your harness has no subagent capability**, path (b) is unavailable and the line reads `performed a|none`. Do not fake it — §8 already states that CDD cannot enforce what the harness does not offer.
 
 ## 7. Rule Writeback (S8)
 
@@ -1168,5 +1202,6 @@ turn it into something precise through questioning.
 | 1.4 | — | Fourth review revision, based on a **compliance self-assessment by the agent itself**. The central finding: rules with no observable output are ignored, and long enumerated lists evaporate regardless of how they are worded. Changes: **§0.1 enforcement principle** — five rules are now required output lines; the anti-pattern list was cut from 17 runtime items to **5** (§9.1 keeps the rest as documentation); the three scattered lock checklists were collapsed into **one printable `[STAGE GATE]` block** (§10); **H4/§2.2 collision fixed**; the **safety-net disclosure gained a mandatory `isolation:` line**; added **§8.1 "this section is not a permission slip"** — the candid capability limits were functioning as a license to skip the very behaviors they named; added **Article 9** (user insists on something the constitution forbids); added **§2.0.0 patience signals** bound to mandatory behavior changes. |
 | 1.5 | — | Fifth review revision, testing the **cross-session memory model**. The central finding: **the chat was being used as storage** — required output lines existed only in chat messages, so no later session could verify they were ever printed, and the §10.1 claim that a missing gate block makes an artifact "unconfirmed" was **false as written**. Changes: (a) required every printed line to be appended to the state file; (b) added CDD-STATE.md's Required-Lines Log, Session Configuration, Rejected Options, Constitution Conflicts, Feature Index, mandatory `Isolation path` column, and a last-completed-task row; (c) replaced "never delete, only append" with archive-to-`CDD-HISTORY.md`; (d) made the weak-hash format uniform; (e) stated that the state file is trusted, not verified. |
 | **1.6** | — | **First revision driven by real usage rather than review.** A solo developer ran a full project on v1.5 — 18 rounds over two days, from an empty directory to a signed release APK, 8,205 lines of Kotlin, 197 passing tests and a device-verified end-to-end flow. What the data showed: **the mechanism worked and the accounting did not.** (a) **§0.2 "log only findings, never assertions"** — the Required-Lines Log produced ~290 lines / ~43,000 characters with no reader, and grew the state file past 105,000 characters, larger than this specification. Printing the lines stays mandatory (that is what makes them executed); storing them does not. The state file now records decisions, rejections, violations, defects and transitions only, with an explicit test: *would a later session do something differently because of this line?* (b) **§10 rewritten**: the full gate is still run every transition, but only a **one-liner** is printed (§10.3) and appended only when a check failed. The old rule's claim that a missing block marks an artifact "unconfirmed" was false and is replaced by the honest position — confirmation is judged by `locked` status and hash, not by gate records. (c) **Archive rule made enforceable** (§ Archived History in the state file): it existed in v1.5 and was never executed; the threshold was lowered to 400 lines / 10 sessions and given a concrete procedure. (d) Required-Lines Log section replaced by **Findings Log** in the state template. <br><br>**What was NOT changed, because real use showed it working**: the constitution (its clauses ended up enforced by architecture tests), decidable acceptance criteria, independent verification with deliberately constructed counterexamples (one counterexample caught a failure class no unit test could), the confirmed-decision log, and the rejected-options list. **Honest scope note**: the project ran in full CDD mode, so **§2.0.1 lightweight mode remains unvalidated** — its interaction with the safety-net list has never been exercised. |
+| **1.7** | — | **First revision to take operational detail from an outside source instead of writing it.** The finding: **§6 asked only one question.** §6.1–§6.4 judge whether the code satisfies the ACs; nothing asked whether the code is *fit to release*, so an all-green AC verdict could be read as shippability. Separately, E2 and E3 stated *what* test-first and evidence-based completion are, but the document contained **no rule governing test quality at all** — the word "mock" did not appear anywhere in it, and §6.4's "check for weak assertions" is an instruction to the *verifier*, not to the implementer who writes the tests. Changes: (a) **`upstream/` added** — five files vendored verbatim from [`obra/superpowers`](https://github.com/obra/superpowers) at commit `8ca22db` (MIT), with provenance, hashes and a re-sync procedure in `upstream/README.md`; these supply the operational detail behind E2, E3 and Article 6.1 that v1.0–v1.6 asserted but never specified. (b) **New §5.3** points E2/E3 at that annex and **scopes** the vendored TDD skill's delete-and-restart rule to code written in the current session — applying it literally to a brownfield project (§1.3, S0.5) would delete the project. (c) **New §6.5 "Code fitness review"** adds the second question to S5 exit via `code-reviewer.md`; the review itself is **not mandatory** and has no trigger condition, but *reporting whether it happened* is, enforced by a **sixth required output line** `[FITNESS REVIEW]` (§0.1) — a "consider reviewing" with no line is skipped silently. (d) §0.1's required-line count corrected from five to six. **Not changed**: the §10 gate (deliberately — a field there would make the review block a transition), and §6.1's mandatory triggers, which already cover the high-cost cases. |
 
 

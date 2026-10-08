@@ -150,11 +150,14 @@ A sixth review round concluded *"abandon it — the accumulation has made it sel
 CDD-BOOT.md    the specification to paste — self-contained: behaviour spec, constitution
                template, artifact templates, question bank
 CDD-STATE.md   the state template the agent fills in and you carry between sessions
+upstream/      vendored verbatim from obra/superpowers (MIT) at a pinned commit — the
+               operational detail behind E2/E3 and §6.5; see upstream/README.md
 tools/         (reserved)
 docs/          (reserved)
 ```
 
 `CDD-BOOT.md` is self-contained on purpose: nothing else needs pasting for a first session.
+`upstream/` is not pasted either — the agent reads it on demand at S5 (§5.3).
 
 ## Honest limitations
 
@@ -162,7 +165,7 @@ docs/          (reserved)
 - **The state file is trusted, not verified.** Nothing detects a row the user edited out or forgot to paste. A weak hash covers the artifacts, not the state file itself.
 - **This is designed for a single developer.** The state file is carried by hand; it does not scale to a team, and it does not try to.
 - **It is not validated by controlled study.** One real project, two days, one domain. Treat the field evidence as existence proof — that it *can* work — rather than as a general result.
-- **The document is long.** 1,172 lines. Most of it is templates and a question bank that the agent consults selectively; the behavioural core is Parts 1 and 5.
+- **The document is long.** 1,207 lines. Most of it is templates and a question bank that the agent consults selectively; the behavioural core is Parts 1 and 5.
 
 ## Design lineage
 
@@ -173,6 +176,7 @@ CDD stands on work that came before it:
 - **Guides and sensors** — [Martin Fowler's framing of the harness as feedforward and feedback control](https://martinfowler.com/articles/harness-engineering.html).
 - **On-the-loop** — [Kief Morris's distinction](https://martinfowler.com/articles/exploring-gen-ai/humans-and-agents.html) between fixing a bad artifact and fixing the harness that produced it, which is why defects here are attributed to rules rather than patched in code.
 - **Cognitive debt** — [Thoughtworks Technology Radar v34](https://www.thoughtworks.com/en-ec/about-us/news/2026/combat-ai-cognitive-debt-radar-v34), the argument that AI raises complexity faster than human comprehension, which motivates the complexity ledger and the "can you explain this change in one paragraph" test.
+- **Agent skills as executable process** — [obra/superpowers](https://github.com/obra/superpowers), from which `upstream/` vendors the operational detail behind E2, E3 and §6.5 verbatim (RED-GREEN-REFACTOR, test-quality rules, the verification gate, the code-review dispatch template) instead of restating it here. Vendoring is deliberate: unwritten detail is where a stated rule quietly fails.
 
 The contribution here is not any of those ideas. It is the assembly: a clarification gate that survives a user who cannot write a good prompt, decidable criteria, verification separated by context rather than by model, and an explicit accounting of which mechanisms were kept because they worked and which were removed because they were measured not to.
 
@@ -238,6 +242,19 @@ v1.6 之前有**五轮评审**——静态读、模拟会话、agent 自评、�
 | **删掉一句假的持久性声称** | v1.5 说"缺失闸门块会让制品未确认"——只要块只存在于聊天里，这句就是假的 |
 
 第六轮评审的结论是「**放弃它**——五轮修补已使它自我抵消」。实测数据说不是：用户把项目做完了。但那一轮对**成本**的判断是对的，v1.6 就是因此而生。**评审不等于测试。**
+
+### v1.7：第一次把操作细节外部化
+
+前六个版本都在自己写规则。v1.7 发现的问题是：**§6 只问了一个问题**。§6.1–§6.4 判的是「代码满足验收标准吗」，没有任何一条问「这代码能不能发」——AC 全绿被当成了可发布。另外 E2、E3 说了 test-first 和「完成 = 有原始输出」**是什么**，但**整份规范没有一条规则管测试质量**：全文一次都没出现 "mock"，而 §6.4 那句「检查太弱的断言」是说给**验证者**听的，不是给写测试的实现者的。
+
+| 改动 | 说明 |
+|---|---|
+| **新增 `upstream/`** | 从 [obra/superpowers](https://github.com/obra/superpowers) 逐字收录 5 个文件（MIT，commit `8ca22db`），补上 E2/E3/Article 6.1 一直声称却从未写出的操作细节 |
+| **新增 §5.3** | 指向该附录，并**限定**上游 TDD 那条「写代码早于测试就删掉」只适用于本次会话新写的代码——照字面用到 brownfield 项目上会把项目删掉 |
+| **新增 §6.5「代码可发审查」** | 给 S5 出口加上第二个问题；审查本身**不强制**、没有触发条件，但「报告做没做」强制，由**第六条输出行** `[FITNESS REVIEW]` 约束 |
+| **§10 闸门不动** | 加字段会让审查变成阻塞项，这条明确不做；输出行就是执行机制 |
+
+**没改**：§6.1 的强制触发条件（钱 / 库存 / 并发占用 / 鉴权 / 隐私）——它本来就覆盖了高代价场景。**唯一一处上游与 CDD 处境冲突的地方**是 TDD 的删除规则，作用域写在 `upstream/README.md` 和 §5.3 两处，因为只读附录的后来的会话会得出相反结论。
 
 ### 已知局限
 

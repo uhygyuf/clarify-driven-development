@@ -1,0 +1,8 @@
+# Vendored third-party files must round-trip byte for byte.
+#
+# upstream/README.md tells a later session to verify these five files by SHA256
+# against obra/superpowers. With core.autocrlf=true and no attribute, a checkout
+# on Windows rewrites LF to CRLF, every file grows, and every hash check fails
+# for a reason that has nothing to do with CDD — which is exactly the kind of
+# silent divergence the vendoring note exists to prevent.
+upstream/** -text
