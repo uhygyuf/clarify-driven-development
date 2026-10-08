@@ -6,3 +6,9 @@
 # for a reason that has nothing to do with CDD — which is exactly the kind of
 # silent divergence the vendoring note exists to prevent.
 upstream/** -text
+
+# The installed skill bundle is validated by sync.ps1's hash comparison and its
+# SKILL.md is parsed from disk as YAML frontmatter. Pin LF so a Windows checkout
+# produces exactly the bytes that were tested, rather than a CRLF variant whose
+# frontmatter has never been through the loader.
+skill/** -text
